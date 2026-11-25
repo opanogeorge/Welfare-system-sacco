@@ -49,7 +49,7 @@
         <div class="form-text">Paid to the member from the fund reserve on top of what members raise. Filled in from the <a href="{{ route('welfare.benefits') }}">benefit schedule</a>; you can change it.</div>
     </div></div>
     @unless($event->exists)
-    @if(auth()->user()->hasRole('manager'))
+    @if(can_route('welfare.open'))
     <div class="card mb-3"><div class="card-body">
         <div class="form-check"><input type="checkbox" name="open_now" value="1" class="form-check-input" id="openNow" checked><label class="form-check-label" for="openNow">Approve and open now (charges the levy)</label></div>
         <div class="form-check"><input type="hidden" name="announce" value="0"><input type="checkbox" name="announce" value="1" class="form-check-input" id="ann" checked><label class="form-check-label" for="ann">SMS all members</label></div>

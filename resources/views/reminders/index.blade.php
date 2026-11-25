@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Automatic Reminders')
 @section('content')
-@php($canEdit = auth()->user()->hasRole('manager'))
+@php($canEdit = can_route('reminders.store'))
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3"><div class="card stat h-100"><div class="card-body"><div class="label">Active rules</div><div class="value">{{ $rules->where('is_active', true)->count() }} / {{ $rules->count() }}</div></div></div></div>
     <div class="col-6 col-lg-3"><div class="card stat h-100"><div class="card-body"><div class="label">Sent today</div><div class="value">{{ $stats['today'] }}</div></div></div></div>

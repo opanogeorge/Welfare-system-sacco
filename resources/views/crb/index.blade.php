@@ -3,8 +3,8 @@
 @section('content')
 <div class="card mb-3"><div class="card-body d-flex flex-wrap gap-3 align-items-center">
     <div><strong>Metropol API:</strong> {!! $configured ? '<span class="text-success">connected</span>' : '<span class="text-muted">not configured – manual entry only</span>' !!}
-        @if(auth()->user()->role === 'admin')<a href="{{ route('admin.integrations', ['tab' => 'crb']) }}" class="small ms-2">settings</a>@endif</div>
-    @if(auth()->user()->hasRole('manager') && auth()->user()->isHq())
+        @if(can_route('admin.integrations'))<a href="{{ route('admin.integrations', ['tab' => 'crb']) }}" class="small ms-2">settings</a>@endif</div>
+    @if(can_route('crb.export') && auth()->user()->isHq())
         <a href="{{ route('crb.export') }}" class="btn btn-outline-success ms-auto"><i class="bi bi-download"></i> Credit information sharing file (CSV)</a>
     @endif
 </div></div>

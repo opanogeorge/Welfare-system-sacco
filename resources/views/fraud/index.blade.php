@@ -7,7 +7,7 @@
             <div class="label">{{ $sev }} – open</div><div class="value text-{{ $c }}">{{ $counts[$sev] ?? 0 }}</div></div></div></a></div>
     @endforeach
     <div class="col-md-3 d-flex flex-column gap-2 justify-content-center">
-        @if(auth()->user()->hasRole('manager'))<form method="POST" action="{{ route('fraud.scan') }}">@csrf<button class="btn btn-outline-danger w-100"><i class="bi bi-radar"></i> Run pattern scan now</button></form>@endif
+        @if(can_route('fraud.scan'))<form method="POST" action="{{ route('fraud.scan') }}">@csrf<button class="btn btn-outline-danger w-100"><i class="bi bi-radar"></i> Run pattern scan now</button></form>@endif
         <a href="?status=reported" class="btn btn-outline-secondary btn-sm">Reported to FRC</a>
     </div>
 </div>

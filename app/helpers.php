@@ -55,3 +55,11 @@ if (! function_exists('theme')) {
         return implode(',', array_map('hexdec', str_split(strlen($h) === 3 ? preg_replace('/(.)/', '$1$1', $h) : $h, 2)));
     }
 }
+
+if (! function_exists('can_route')) {
+    /** Show a link/button only if the signed-in user may open that route. */
+    function can_route(string $route): bool
+    {
+        return (bool) auth()->user()?->canRoute($route);
+    }
+}

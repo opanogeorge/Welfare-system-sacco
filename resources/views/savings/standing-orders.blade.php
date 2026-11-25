@@ -28,7 +28,7 @@
         </form>
         <p class="small text-muted mt-2 mb-0">Runs automatically from the member's savings (FOSA) account on that day each month. Members get an SMS if funds are short.</p>
     </div></div>
-    @if(auth()->user()->hasRole('accountant'))
+    @if(can_route('savings.interest'))
     <div class="card"><div class="card-body">
         <h6>Post savings interest</h6>
         <form method="POST" action="{{ route('savings.interest') }}" class="d-flex gap-1">@csrf

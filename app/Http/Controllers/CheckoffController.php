@@ -45,7 +45,7 @@ class CheckoffController extends Controller
             'channel' => 'nullable|in:payroll,bank,opening',
         ]);
         $channel = $request->input('channel', 'payroll');
-        if ($channel === 'opening' && ! $request->user()->hasRole('accountant')) abort(403);
+        if ($channel === 'opening' && ! $request->user()->hasPermission('checkoff.opening')) abort(403, 'Opening-balance uploads need the "Go-live opening balances" permission.');
 
         try {
             $res = $service->postFile($request->file('file')->getRealPath(), $request->txn_date, $request->reference, null, $channel);

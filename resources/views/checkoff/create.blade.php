@@ -11,7 +11,7 @@
                 <select name="channel" class="form-select">
                     <option value="payroll">Payroll check-off (employer remits later)</option>
                     <option value="bank">Bulk bank deposit</option>
-                    @if(auth()->user()->hasRole('accountant'))<option value="opening">Go-live opening balances (no cash movement)</option>@endif
+                    @if(auth()->user()->hasPermission('checkoff.opening'))<option value="opening">Go-live opening balances (no cash movement)</option>@endif
                 </select>
                 <div class="form-text">For monthly employer check-off with expected-vs-actual reconciliation, use <a href="{{ route('employers.index') }}">Employers &amp; Check-off</a>.</div>
             </div>

@@ -14,7 +14,7 @@
     </table>
     @if($p['issues'])
         <div class="alert alert-danger"><strong>Cannot clear yet:</strong><ul class="mb-0">@foreach($p['issues'] as $i)<li>{{ $i }}</li>@endforeach</ul></div>
-    @elseif($member->status !== 'exited' && auth()->user()->hasRole('manager'))
+    @elseif($member->status !== 'exited' && can_route('members.exit.store'))
         <form method="POST" data-confirm="Process exit and post the refund? This cannot be undone.">@csrf
             <div class="row g-2 mb-2">
                 <div class="col-md-4"><select name="channel" class="form-select"><option value="bank">Bank transfer</option><option value="mpesa">M-Pesa</option><option value="cheque">Cheque</option><option value="cash">Cash</option></select></div>
@@ -27,7 +27,7 @@
     @endif
 </div></div></div>
 <div class="col-lg-6">
-    @if($p['shares'] > 0 && auth()->user()->hasRole('manager'))
+    @if($p['shares'] > 0 && can_route('members.transfer-shares'))
     <div class="card"><div class="card-body">
         <h6>Transfer share capital</h6>
         <form method="POST" action="{{ route('members.transfer-shares', $member) }}">@csrf

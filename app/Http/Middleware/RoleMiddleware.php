@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /**
- * Usage: ->middleware('role:teller,accountant'). Admin always passes.
+ * Usage: ->middleware('role:staff') any staff role (incl. custom roles), ->middleware('role:member').
+ * Admin always passes. Feature access is checked by the 'permission' middleware.
  * Also enforces: active account, staff IP allowlist, password expiry.
  */
 class RoleMiddleware
@@ -34,6 +35,11 @@ class RoleMiddleware
             }
         }
 
+        if (in_array('staff', $roles, true)) {
+            if (! $user->isStaff()) abort(403, 'Staff area.');
+            $roles = array_diff($roles, ['staff']);
+            if (! $roles) return $next($request);
+        }
         if ($roles && ! $user->hasRole(...$roles)) {
             abort(403, 'You do not have permission to perform this action.');
         }

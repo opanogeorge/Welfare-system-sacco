@@ -11,7 +11,7 @@
             <tr><td>{{ $f->fd_no }}</td><td><a href="{{ route('members.show', $f->member) }}">{{ $f->member->member_no }}</a> {{ $f->member->full_name }}</td>
                 <td class="text-money">{{ money($f->amount) }}</td><td>{{ $f->rate }}%</td><td>{{ $f->term_months }} mo</td><td>{{ $f->maturity_date->format('d/m/Y') }}</td>
                 <td class="text-money">{{ money($f->interest_amount) }}</td><td><span class="badge text-bg-light">{{ $f->status }}</span> @if($f->auto_rollover)<i class="bi bi-arrow-repeat" title="Auto rollover"></i>@endif</td>
-                <td>@if($f->status === 'active' && auth()->user()->hasRole('accountant', 'manager'))
+                <td>@if($f->status === 'active' && can_route('savings.fd.close'))
                     <form method="POST" action="{{ route('savings.fd.close', $f) }}" data-confirm="{{ $f->maturity_date->isFuture() ? 'Break this deposit early? Reduced interest applies.' : 'Pay out this matured deposit?' }}">@csrf
                         <button class="btn btn-sm btn-outline-{{ $f->maturity_date->isFuture() ? 'danger' : 'success' }}">{{ $f->maturity_date->isFuture() ? 'Break' : 'Pay out' }}</button></form>@endif</td></tr>
         @empty <tr><td colspan="9" class="text-muted">No fixed deposits.</td></tr> @endforelse

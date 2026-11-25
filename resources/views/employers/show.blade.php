@@ -24,7 +24,7 @@
     </div></div>
 </div>
 <div class="col-lg-4">
-    @if(auth()->user()->hasRole('accountant'))
+    @if(can_route('employers.remit'))
     <div class="card mb-3"><div class="card-body">
         <h6>Record remittance received</h6>
         <form method="POST" action="{{ route('employers.remit', $employer) }}">@csrf

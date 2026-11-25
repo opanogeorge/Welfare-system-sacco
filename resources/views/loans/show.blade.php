@@ -44,10 +44,10 @@
         @if($loan->topUpOf)<div class="alert alert-info small mt-2 mb-0">Top-up of <a href="{{ route('loans.show', $loan->topUpOf) }}">{{ $loan->topUpOf->loan_no }}</a>@if($loan->top_up_payoff > 0) · KES {{ money($loan->top_up_payoff) }} used to clear it @endif</div>@endif
         <div class="mt-3 d-flex gap-2 no-print">
             <a href="{{ route('loans.statement', $loan) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Loan statement</a>
-            @if($loan->status === 'disbursed' && auth()->user()->hasRole('loan_officer') && ($loan->product->allow_top_up ?? true))
+            @if($loan->status === 'disbursed' && can_route('loans.create') && ($loan->product->allow_top_up ?? true))
                 <a href="{{ route('loans.create', ['top_up' => $loan->id]) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-up-circle"></i> Top-up / refinance</a>
             @endif
-            @if(in_array($loan->status, ['disbursed', 'written_off']) && $loan->daysInArrears() > 0 && $u->hasRole('manager', 'loan_officer'))
+            @if(in_array($loan->status, ['disbursed', 'written_off']) && $loan->daysInArrears() > 0 && can_route('loans.demand-letter'))
                 <a href="{{ route('loans.demand-letter', $loan) }}" target="_blank" class="btn btn-sm btn-outline-danger"><i class="bi bi-envelope-exclamation"></i> Demand letter</a>
             @endif
         </div>
@@ -67,11 +67,11 @@
             @forelse($loan->collaterals as $c)
                 <tr><td>{{ str_replace('_', ' ', $c->type) }}</td><td>{{ $c->description }} <span class="small text-muted">{{ $c->reference }}</span></td><td class="text-money">{{ money($c->value) }}</td>
                     <td>@if($c->document)<a href="{{ route('loans.collateral.document', $c) }}"><i class="bi bi-paperclip"></i></a>@endif</td>
-                    <td><span class="badge text-bg-light">{{ $c->status }}</span> @if($c->status === 'held' && $loan->status !== 'disbursed' && auth()->user()->hasRole('manager'))
+                    <td><span class="badge text-bg-light">{{ $c->status }}</span> @if($c->status === 'held' && $loan->status !== 'disbursed' && can_route('loans.collateral.release'))
                         <form method="POST" action="{{ route('loans.collateral.release', $c) }}" class="d-inline">@csrf<button class="btn btn-sm btn-link p-0">release</button></form>@endif</td></tr>
             @empty <tr><td class="text-muted">No collateral recorded (guarantors / deposits only).</td></tr> @endforelse
         </table>
-        @if(auth()->user()->hasRole('loan_officer') && ! in_array($loan->status, ['closed', 'rejected']))
+        @if(can_route('loans.collateral.store') && ! in_array($loan->status, ['closed', 'rejected']))
         <form method="POST" action="{{ route('loans.collateral.store', $loan) }}" enctype="multipart/form-data" class="row g-1">@csrf
             <div class="col-md-2"><select name="type" class="form-select form-select-sm">@foreach(['title_deed' => 'Title deed', 'logbook' => 'Logbook', 'salary' => 'Salary assignment', 'equipment' => 'Equipment', 'fixed_deposit' => 'Fixed deposit', 'other' => 'Other'] as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
             <div class="col-md-4"><input name="description" class="form-control form-control-sm" placeholder="Description" required></div>
@@ -98,17 +98,17 @@
                             @if($g->decline_reason)· “{{ $g->decline_reason }}”@endif @if($g->released_at)· {{ $g->release_reason }}@endif
                             @if($g->recovered_amount > 0)<span class="text-danger">· recovered {{ money($g->recovered_amount) }}</span>@endif</div></td>
                     <td class="text-end text-nowrap">
-                        @if(in_array($g->status, ['accepted', 'declined', 'expired', 'pending']) && in_array($loan->status, ['guarantors_pending', 'pending', 'appraised', 'approved', 'disbursed']) && $u->hasRole('loan_officer') && ! ($g->replaced_by_id && $g->status === 'accepted'))
+                        @if(in_array($g->status, ['accepted', 'declined', 'expired', 'pending']) && in_array($loan->status, ['guarantors_pending', 'pending', 'appraised', 'approved', 'disbursed']) && can_route('loans.guarantor.replace') && ! ($g->replaced_by_id && $g->status === 'accepted'))
                             <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#rg{{ $g->id }}">replace</button>
                         @endif
-                        @if($g->status === 'accepted' && $u->hasRole('manager'))
+                        @if($g->status === 'accepted' && can_route('guarantors.release-decision'))
                             @if($g->release_requested_at)
                                 <form method="POST" action="{{ route('guarantors.release-decision', $g) }}" class="d-inline">@csrf<button name="decision" value="approve" class="btn btn-sm btn-link p-0 text-danger">approve release</button> <button name="decision" value="reject" class="btn btn-sm btn-link p-0">decline</button></form>
                             @else
                                 <form method="POST" action="{{ route('loans.guarantor.release', $g) }}" class="d-inline" data-confirm="Release this guarantor? Allowed only if the loan stays covered.">@csrf<input type="hidden" name="reason" value="Released by the SACCO"><button class="btn btn-sm btn-link p-0 text-danger">release</button></form>
                             @endif
                         @endif
-                        @if($g->status === 'pending' && $u->hasRole('loan_officer'))
+                        @if($g->status === 'pending' && can_route('loans.guarantor.respond'))
                             <form method="POST" action="{{ route('loans.guarantor.respond', $g) }}" class="d-inline">@csrf<input type="hidden" name="accept" value="1"><button class="btn btn-sm btn-outline-success py-0">Signed form</button></form>
                             <form method="POST" action="{{ route('loans.guarantor.respond', $g) }}" class="d-inline">@csrf<input type="hidden" name="accept" value="0"><button class="btn btn-sm btn-outline-danger py-0">Declined</button></form>
                         @endif
@@ -122,7 +122,7 @@
             @empty <tr><td class="text-muted">No guarantors.</td></tr> @endforelse
         </table>
         </div>
-        @if(in_array($loan->status, ['guarantors_pending', 'pending', 'appraised', 'approved', 'disbursed']) && $u->hasRole('loan_officer'))
+        @if(in_array($loan->status, ['guarantors_pending', 'pending', 'appraised', 'approved', 'disbursed']) && can_route('loans.guarantor.add'))
             <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="collapse" data-bs-target="#addG"><i class="bi bi-person-plus"></i> Add guarantor</button>
             <form method="POST" action="{{ route('loans.guarantor.add', $loan) }}" class="collapse mt-2 border rounded p-2" id="addG">@csrf
                 <select name="member_id" class="member-select guarantor-pick" data-amount-target="addGAmt" required></select>
@@ -160,7 +160,7 @@
                 <td class="small">{{ $a->notes }} @if($a->promise_date)<div>Promise: KES {{ money($a->promise_amount) }} by {{ $a->promise_date->format('d/m/Y') }} <span class="badge text-bg-{{ ['kept' => 'success', 'broken' => 'danger'][$a->promise_status] ?? 'secondary' }}">{{ $a->promise_status }}</span></div>@endif</td>
                 <td class="small text-muted">{{ $a->user?->name }}</td></tr>
         @empty<tr><td class="text-muted small">No follow-up recorded yet.</td></tr>@endforelse</table>
-        @if($u->hasRole('manager', 'loan_officer', 'accountant') && $loan->status !== 'closed')
+        @if(can_route('loans.recovery-action') && $loan->status !== 'closed')
         <form method="POST" action="{{ route('loans.recovery-action', $loan) }}" class="row g-1">@csrf
             <div class="col-md-3"><select name="action" class="form-select form-select-sm" onchange="document.getElementById('ptp').classList.toggle('d-none', this.value !== 'promise_to_pay')">@foreach(\App\Services\LoanService::RECOVERY_ACTIONS as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
             <div class="col-md-5"><input name="notes" class="form-control form-control-sm" placeholder="Notes (who you spoke to, outcome)"></div>
@@ -205,7 +205,7 @@
             <div class="text-muted">Probability of going 90+ days in arrears · model {{ $ml['model']->version }}</div>
             <div class="my-2 fw-semibold">Recommendation: {{ $ml['recommendation'] }}</div>
             @foreach($ml['drivers'] as $d)<div><i class="bi bi-arrow-{{ $d['effect'] === 'raises risk' ? 'up text-danger' : 'down text-success' }}"></i> {{ $d['factor'] }} <span class="text-muted">({{ $d['value'] }})</span></div>@endforeach
-            @if(auth()->user()->hasRole('loan_officer') && $loan->status !== 'disbursed')
+            @if(can_route('loans.rescore') && $loan->status !== 'disbursed')
                 <form method="POST" action="{{ route('loans.rescore', $loan) }}" class="mt-2">@csrf<button class="btn btn-sm btn-link p-0">Re-score with latest data</button></form>
             @endif
         </div></div>
@@ -220,7 +220,7 @@
                 @if($crbLatest->is_listed === true)<span class="badge text-bg-danger">Negative listing</span>@elseif($crbLatest->is_listed === false)<span class="badge text-bg-success">Clear</span>@endif
                 <div class="text-muted">{{ $crbLatest->summary }}</div></div>
         @else<div class="text-muted mb-2">No CRB check on file.</div>@endif
-        @if(auth()->user()->hasRole('loan_officer'))
+        @if(can_route('crb.run'))
             <form method="POST" action="{{ route('crb.run', $loan->member) }}" class="d-flex gap-1 mb-1">@csrf<input type="hidden" name="loan_id" value="{{ $loan->id }}">
                 <select name="type" class="form-select form-select-sm"><option value="score">Credit score</option><option value="delinquency">Delinquency status</option><option value="report">Full report</option></select>
                 <label class="small text-nowrap"><input type="checkbox" name="consent" value="1" required> consent</label>
@@ -243,7 +243,7 @@
         <div class="d-flex"><h6><i class="bi bi-pen"></i> Loan agreement</h6><a href="{{ route('loans.agreement', $loan) }}" target="_blank" class="ms-auto">View / PDF</a></div>
         @forelse($loanSigs as $s)<div><i class="bi bi-check-circle text-success"></i> {{ $s->signer_name }} ({{ $s->signer_role }}) {{ $s->signed_at->format('d/m/Y H:i') }} <code>{{ $s->verification_code }}</code></div>
         @empty<div class="text-muted">Not signed yet. The member can sign in the portal, or capture it here.</div>@endforelse
-        @if(auth()->user()->hasRole('loan_officer', 'teller') && ! in_array($loan->status, ['rejected', 'closed']))
+        @if(can_route('loans.sign') && ! in_array($loan->status, ['rejected', 'closed']))
             <a class="small" data-bs-toggle="collapse" href="#sigPad">Capture signature at the counter</a>
             <form method="POST" action="{{ route('loans.sign', $loan) }}" class="collapse mt-2" id="sigPad">@csrf
                 <select name="signer" class="form-select form-select-sm mb-1"><option value="borrower">Borrower: {{ $loan->member->full_name }}</option><option value="witness">Witness (me)</option></select>
@@ -277,7 +277,7 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'pending' && $u->hasRole('loan_officer'))
+    @if($loan->status === 'pending' && can_route('loans.appraise'))
         <div class="card mb-3"><div class="card-body"><h6>Appraise</h6>
             <form method="POST" action="{{ route('loans.appraise', $loan) }}">@csrf
                 <div class="small fw-semibold mb-1">Affordability (from payslip)</div>
@@ -293,7 +293,7 @@
         </div></div>
     @endif
 
-    @if(in_array($loan->status, ['appraised', 'pending']) && $u->hasRole('manager'))
+    @if(in_array($loan->status, ['appraised', 'pending']) && can_route('loans.approve'))
         <div class="card mb-3"><div class="card-body"><h6>Approve <small class="text-muted">level {{ $loan->approvals->count() + 1 }} of {{ $loan->approvals_required }}</small></h6>
             <form method="POST" action="{{ route('loans.approve', $loan) }}">@csrf
                 <label class="form-label small">Amount approved</label>
@@ -303,12 +303,12 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'approved' && $u->hasRole('accountant', 'manager'))
+    @if($loan->status === 'approved' && can_route('loans.disburse'))
         <div class="card mb-3"><div class="card-body"><h6>Disburse</h6>
             <form method="POST" action="{{ route('loans.disburse', $loan) }}" data-confirm="Disburse this loan?">@csrf
                 <label class="form-label small">Channel</label>
                 <select name="channel" class="form-select mb-2"><option value="savings">Credit member's savings (FOSA)</option><option value="bank">Bank transfer</option><option value="mpesa">M-Pesa (B2C)</option><option value="cheque">Cheque</option>
-                    @if($u->hasRole('accountant'))<option value="opening">Go-live balance migration (no cash)</option>@endif</select>
+                    @if(auth()->user()->hasPermission('checkoff.opening'))<option value="opening">Go-live balance migration (no cash)</option>@endif</select>
                 @if($loan->topUpOf)<div class="alert alert-info small py-1">KES {{ money($loan->topUpOf->outstanding) }} will be used to clear {{ $loan->topUpOf->loan_no }}.</div>@endif
                 <div class="row g-2 mb-2">
                     <div class="col"><label class="form-label small">Disbursement date</label><input type="date" name="disbursed_on" value="{{ today()->toDateString() }}" class="form-control"></div>
@@ -321,7 +321,7 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'disbursed' && $u->hasRole('teller', 'accountant'))
+    @if($loan->status === 'disbursed' && can_route('loans.repay'))
         <div class="card mb-3"><div class="card-body"><h6>Post repayment</h6>
             <form method="POST" action="{{ route('loans.repay', $loan) }}">@csrf
                 <input type="number" step="0.01" name="amount" class="form-control mb-2" placeholder="Amount" required>
@@ -342,7 +342,7 @@
                 <div class="small border-bottom py-1"><span class="text-muted">{{ $rl->created_at->format('d/m H:i') }}</span> @if($rl->recipient === 'guarantor')<span class="badge text-bg-warning">guarantor</span>@endif
                     <span class="badge text-bg-{{ $rl->status === 'sent' ? 'success' : 'danger' }}">{{ $rl->status }}</span><br>{{ \Illuminate\Support\Str::limit($rl->message, 110) }}</div>
             @empty<div class="small text-muted">No reminders sent yet. Automatic reminders go out each morning.</div>@endforelse
-            @if($u->hasRole('manager', 'loan_officer', 'accountant'))
+            @if(can_route('loans.remind'))
             <form method="POST" action="{{ route('loans.remind', $loan) }}" class="mt-2">@csrf
                 <textarea name="message" rows="2" maxlength="480" class="form-control form-control-sm mb-1" placeholder="Leave blank for the standard {{ $loan->daysInArrears() ? 'arrears' : 'due date' }} message"></textarea>
                 <button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-send"></i> Send SMS reminder now</button></form>
@@ -350,7 +350,7 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'disbursed' && $u->hasRole('manager'))
+    @if($loan->status === 'disbursed' && can_route('loans.reschedule'))
         <div class="card mb-3"><div class="card-body"><h6>Reschedule / restructure</h6>
             <form method="POST" action="{{ route('loans.reschedule', $loan) }}" data-confirm="Re-amortise the remaining principal of KES {{ money($loan->principal_balance) }}?">@csrf
                 <div class="row g-2 mb-2">
@@ -365,14 +365,14 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'disbursed' && $u->hasRole('manager') && $loan->daysInArrears() > 90)
+    @if($loan->status === 'disbursed' && can_route('loans.recover') && $loan->daysInArrears() > 90)
         <div class="card mb-3 border-danger"><div class="card-body"><h6 class="text-danger">Default recovery</h6>
             <p class="small">Recover the outstanding balance from guarantors' deposits, pro-rata to their guarantee.</p>
             <form method="POST" action="{{ route('loans.recover', $loan) }}" data-confirm="Debit guarantors' deposits to clear this loan?">@csrf<button class="btn btn-outline-danger w-100">Recover from guarantors</button></form>
         </div></div>
     @endif
 
-    @if($loan->status === 'disbursed' && $u->hasRole('manager', 'accountant'))
+    @if($loan->status === 'disbursed' && can_route('loans.fine'))
         <div class="card mb-3"><div class="card-body"><h6>Charge a fine</h6>
             <form method="POST" action="{{ route('loans.fine', $loan) }}" data-confirm="Charge this fine to the member's loan?">@csrf
                 <div class="row g-1 mb-1">
@@ -385,7 +385,7 @@
         </div></div>
     @endif
 
-    @if(in_array($loan->status, ['disbursed']) && $u->hasRole('manager') && ($loan->penalty_balance > 0 || $loan->interest_balance > 0))
+    @if(in_array($loan->status, ['disbursed']) && can_route('loans.waive') && ($loan->penalty_balance > 0 || $loan->interest_balance > 0))
         <div class="card mb-3"><div class="card-body"><h6>Waive penalty / interest</h6>
             <form method="POST" action="{{ route('loans.waive', $loan) }}" data-confirm="Waive this amount? This cannot be undone.">@csrf
                 <div class="row g-1 mb-1">
@@ -397,7 +397,7 @@
         </div></div>
     @endif
 
-    @if($loan->status === 'disbursed' && $u->hasRole('manager') && $u->isHq())
+    @if($loan->status === 'disbursed' && can_route('loans.write-off') && $u->isHq())
         <div class="card mb-3 border-danger"><div class="card-body"><h6 class="text-danger">Write off</h6>
             @if($loan->daysInArrears() >= (int) setting('write_off_min_days', 180))
                 <form method="POST" action="{{ route('loans.write-off', $loan) }}" data-confirm="Write off KES {{ money($loan->outstanding) }}? The balance moves off the loan book against the provision.">@csrf
@@ -410,7 +410,7 @@
         </div></div>
     @endif
 
-    @if(in_array($loan->status, ['pending', 'guarantors_pending', 'appraised', 'approved']) && $u->hasRole('manager', 'loan_officer'))
+    @if(in_array($loan->status, ['pending', 'guarantors_pending', 'appraised', 'approved']) && can_route('loans.reject'))
         <div class="card"><div class="card-body"><h6>Reject</h6>
             <form method="POST" action="{{ route('loans.reject', $loan) }}" data-confirm="Reject this application?">@csrf
                 <input name="reason" class="form-control mb-2" placeholder="Reason" required><button class="btn btn-outline-danger w-100">Reject</button></form>

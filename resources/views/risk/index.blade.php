@@ -7,7 +7,7 @@
         <div class="d-flex align-items-start">
             <div><h5 class="mb-0">Active model {{ $model->version }}</h5>
                 <small class="text-muted">Trained {{ $model->created_at->format('d M Y H:i') }} on {{ number_format($model->samples) }} loans ({{ $model->defaults }} defaults) · logistic regression</small></div>
-            @if(auth()->user()->hasRole('manager') && auth()->user()->isHq())
+            @if(can_route('risk.train') && auth()->user()->isHq())
                 <form method="POST" action="{{ route('risk.train') }}" class="ms-auto">@csrf<button class="btn btn-sm btn-success"><i class="bi bi-arrow-repeat"></i> Retrain now</button></form>
             @endif
         </div>
@@ -28,7 +28,7 @@
     @else
         <h5>No model trained yet</h5>
         <p>The system learns from your own loan history: which borrowers repaid and which went 90+ days in arrears. It needs at least <strong>{{ setting('risk_min_samples', 50) }}</strong> finished loans including <strong>{{ setting('risk_min_defaults', 5) }}</strong> defaults. Until then, loans use the rule-based score.</p>
-        @if(auth()->user()->hasRole('manager') && auth()->user()->isHq())
+        @if(can_route('risk.train') && auth()->user()->isHq())
             <form method="POST" action="{{ route('risk.train') }}">@csrf<button class="btn btn-success"><i class="bi bi-cpu"></i> Train model now</button></form>
         @endif
         <p class="small text-muted mt-3 mb-0">Retrains automatically on the 2nd of every month.</p>
@@ -48,7 +48,7 @@
     @if($history->count() > 1)
         <h6 class="mt-3">Model history</h6>
         <table class="table table-sm small mb-0">@foreach($history as $h)<tr><td>{{ $h->version }}</td><td>AUC {{ $h->auc ?? '—' }}</td>
-            <td>@if($h->is_active)<span class="badge text-bg-success">active</span>@elseif(auth()->user()->hasRole('manager'))<form method="POST" action="{{ route('risk.activate', $h) }}">@csrf<button class="btn btn-sm btn-link p-0">use</button></form>@endif</td></tr>@endforeach</table>
+            <td>@if($h->is_active)<span class="badge text-bg-success">active</span>@elseif(can_route('risk.activate'))<form method="POST" action="{{ route('risk.activate', $h) }}">@csrf<button class="btn btn-sm btn-link p-0">use</button></form>@endif</td></tr>@endforeach</table>
     @endif
 </div></div></div>
 </div>

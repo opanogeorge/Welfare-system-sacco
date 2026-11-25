@@ -19,7 +19,7 @@
             </div></div>
         @endforeach
     </div>
-    @if(auth()->user()->hasRole('manager', 'loan_officer'))
+    @if(can_route('members.identity.face'))
     <form method="POST" action="{{ route('members.identity.face', $member) }}" class="row g-2 align-items-end">@csrf
         <div class="col-md-6"><input name="notes" class="form-control" placeholder="Notes (e.g. compared in person, glasses, older photo)"></div>
         <div class="col-md-3"><button name="match" value="1" class="btn btn-success w-100"><i class="bi bi-person-check"></i> Same person</button></div>
@@ -41,7 +41,7 @@
     <div class="card mb-3"><div class="card-body">
         <h6>National registry (IPRS) check</h6>
         <p class="small text-muted">Confirms the ID number, names and date of birth with the government registry via Smile ID.</p>
-        @if($configured && auth()->user()->hasRole('manager', 'loan_officer'))
+        @if($configured && can_route('members.identity.iprs'))
             <form method="POST" action="{{ route('members.identity.iprs', $member) }}">@csrf<button class="btn btn-outline-success w-100"><i class="bi bi-shield-check"></i> Run IPRS check</button></form>
         @elseif(! $configured)<div class="small text-muted">Smile ID not configured (Admin → Integrations → ID check). Verify the physical ID at the counter instead.</div>@endif
     </div></div>

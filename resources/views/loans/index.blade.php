@@ -9,7 +9,7 @@
         <div class="col-md-3"><select name="product" class="form-select"><option value="">All products</option>
             @foreach($products as $p)<option value="{{ $p->id }}" @selected(request('product') == $p->id)>{{ $p->name }}</option>@endforeach</select></div>
         <div class="col-md-2 d-flex gap-2"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
-            @if(auth()->user()->hasRole('loan_officer'))<a href="{{ route('loans.create') }}" class="btn btn-success flex-grow-1"><i class="bi bi-plus"></i> New</a>@endif</div>
+            @if(can_route('loans.create'))<a href="{{ route('loans.create') }}" class="btn btn-success flex-grow-1"><i class="bi bi-plus"></i> New</a>@endif</div>
     </form>
     <div class="table-responsive">
     <table class="table table-hover align-middle">

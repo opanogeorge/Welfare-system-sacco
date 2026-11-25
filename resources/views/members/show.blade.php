@@ -4,21 +4,21 @@
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a href="{{ route('members.edit', $member) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
     <a href="{{ route('members.statement', $member) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-text"></i> Statement</a>
-    @if(auth()->user()->hasRole('teller', 'accountant'))
+    @if(can_route('transactions.create'))
         <a href="{{ route('transactions.create', ['member' => $member->id]) }}" class="btn btn-sm btn-success"><i class="bi bi-plus-circle"></i> Deposit / Withdraw</a>
     @endif
-    @if(auth()->user()->hasRole('loan_officer'))
+    @if(can_route('loans.create'))
         <a href="{{ route('loans.create', ['member' => $member->id]) }}" class="btn btn-sm btn-primary"><i class="bi bi-cash-coin"></i> New loan</a>
     @endif
     <a href="{{ route('members.statement.pdf', $member) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-pdf"></i> PDF</a>
     <a href="{{ route('guarantors.show', $member) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-people"></i> As guarantor @if($member->guarantor_status !== 'eligible')<span class="badge text-bg-danger">{{ $member->guarantor_status }}</span>@endif</a>
-    @if($member->status === 'pending' && auth()->user()->hasRole('manager'))
+    @if($member->status === 'pending' && can_route('members.approve'))
         <form method="POST" action="{{ route('members.approve', $member) }}" class="d-inline">@csrf<button class="btn btn-sm btn-warning"><i class="bi bi-check2-circle"></i> Approve membership</button></form>
     @endif
-    @if(auth()->user()->hasRole('manager', 'accountant') && $member->status !== 'exited')
+    @if(can_route('members.exit') && $member->status !== 'exited')
         <a href="{{ route('members.exit', $member) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Exit / clearance</a>
     @endif
-    @if(auth()->user()->hasRole('manager'))
+    @if(can_route('members.status'))
     <form method="POST" action="{{ route('members.status', $member) }}" class="ms-auto d-flex gap-1" data-confirm="Change member status?">
         @csrf
         <select name="status" class="form-select form-select-sm w-auto">
@@ -60,7 +60,7 @@
                 <a href="{{ route('members.identity', $member) }}" class="ms-auto small">Verify identity</a></div>
             <div class="small text-muted mb-2">Joined via {{ $member->onboarding_channel }} · CRB consent {{ $member->crb_consent ? 'yes' : 'no' }}
                 @if($member->branch) · Branch {{ $member->branch->name }}@endif</div>
-            @if(auth()->user()->hasRole('manager') && auth()->user()->isHq() && \App\Models\Branch::count())
+            @if(can_route('members.branch') && auth()->user()->isHq() && \App\Models\Branch::count())
                 <form method="POST" action="{{ route('members.branch', $member) }}" class="d-flex gap-1 mb-3">@csrf
                     <select name="branch_id" class="form-select form-select-sm">@foreach(\App\Models\Branch::where('is_active', true)->orderBy('name')->get() as $b)<option value="{{ $b->id }}" @selected($member->branch_id === $b->id)>{{ $b->name }}</option>@endforeach</select>
                     <button class="btn btn-sm btn-outline-secondary text-nowrap">Move branch</button></form>
@@ -69,9 +69,9 @@
             <table class="table table-sm small">
                 @forelse($member->documents as $d)
                     <tr><td><a href="{{ route('documents.show', $d) }}" target="_blank">{{ $d->title }}</a></td>
-                        <td>@if($d->verified)<i class="bi bi-patch-check-fill text-success" title="Verified"></i>@elseif(auth()->user()->hasRole('manager', 'loan_officer'))
+                        <td>@if($d->verified)<i class="bi bi-patch-check-fill text-success" title="Verified"></i>@elseif(can_route('documents.verify'))
                             <form method="POST" action="{{ route('documents.verify', $d) }}">@csrf<button class="btn btn-sm btn-link p-0">verify</button></form>@endif</td>
-                        <td>@if(auth()->user()->hasRole('manager'))<form method="POST" action="{{ route('documents.destroy', $d) }}" data-confirm="Delete document?">@csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button></form>@endif</td></tr>
+                        <td>@if(can_route('documents.destroy'))<form method="POST" action="{{ route('documents.destroy', $d) }}" data-confirm="Delete document?">@csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button></form>@endif</td></tr>
                 @empty <tr><td class="text-muted">No documents uploaded.</td></tr> @endforelse
             </table>
             <form method="POST" action="{{ route('members.documents.store', $member) }}" enctype="multipart/form-data" class="row g-1">@csrf

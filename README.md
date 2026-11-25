@@ -245,6 +245,22 @@ New settings: `write_off_min_days` (180), `demand_notice_days` (14). The command
 
 Daily job: `sacco:guarantor-requests` (07:45).
 
+## 7e. Roles & permissions (Administration → Roles & permissions)
+
+- **74 permissions** in 9 groups (Members, Front office, Loans, Risk & compliance, Welfare, Dividends & accounting, Communication & governance, Reports, Administration). They're defined in `config/permissions.php`.
+- **Every staff page and action is checked against a permission.** `config/permissions.php → routes` maps each route to its permission, and buttons and menu items hide automatically when the user lacks it (`can_route('loans.approve')`). Permissions also work with `@can('loans.approve')`, `$user->can()` and `->middleware('permission:loans.approve')`.
+- **Built-in roles:** Administrator (always everything), Manager, Loan Officer, Accountant, Teller and Member. On install they get exactly the access they had before (verified route by route), and you can change it from then on.
+- **Custom roles:** create one (e.g. *Welfare Officer*, *Credit Committee Member*, *Auditor (read-only)*), start from a copy of an existing role, and tick its permissions on the role page or in the full **permission matrix**.
+- **Users:** one main role plus optional **additional roles**. Their permissions combine. The user page shows exactly what that person can do.
+- **Special permissions:** *Final-level (board) loan approval* (level-3 approvals) and *Go-live opening balances*.
+- **Safeguards:**
+  - Only administrators can edit administrators.
+  - Someone who isn't an administrator can only assign roles, and grant or remove permissions, that they hold themselves.
+  - You can't change your own role or disable yourself.
+  - Built-in roles can't be deleted, and a role can't be deleted while it is someone's main role.
+  - Every change is written to the audit trail.
+- After adding permissions to the config: `php artisan sacco:sync-permissions`. To reset the built-in roles to their defaults: `php artisan sacco:sync-permissions --reset`.
+
 ## 8. Not included (separate projects or integrations)
 - **Mobile app** and its member API.
 - **TransUnion / Creditinfo APIs** (manual entry is supported); automated face matching (needs Smile ID's SDK); advanced e-signatures via a licensed certification provider.

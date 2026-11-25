@@ -23,7 +23,7 @@ class Menu
 
         // drop hidden items, missing routes and empty groups; work out active + badges
         return collect($groups)->map(function ($g) {
-            $items = collect($g['items'])->filter(fn ($i) => ($i[4] ?? true) && Route::has($i[1]))->map(fn ($i) => [
+            $items = collect($g['items'])->filter(fn ($i) => ($i[4] ?? true) && Route::has($i[1]) && $u->canRoute($i[1]))->map(fn ($i) => [
                 'label' => $i[0], 'url' => route($i[1]), 'icon' => $i[2],
                 'active' => request()->routeIs(...($i[3] ?? [$i[1]])), 'badge' => $i[5] ?? null,
             ])->values();
@@ -67,10 +67,9 @@ class Menu
 
     private static function staff(User $u): array
     {
-        $cash = $u->hasRole('teller', 'accountant');
-        $mgr = $u->hasRole('manager');
-        $acct = $u->hasRole('accountant');
-        $hqFin = $u->hasRole('accountant', 'manager') && $u->isHq();
+        // Item visibility comes from permissions (canRoute() in for()); these only add extra conditions.
+        $cash = $mgr = $acct = true;
+        $hqFin = $u->isHq();   // HQ-only screens (dividends, accounting)
 
         return [
             ['key' => 'dash', 'label' => 'Dashboard', 'icon' => 'speedometer2', 'items' => [
@@ -97,11 +96,11 @@ class Menu
             ]],
             ['key' => 'loans', 'label' => 'Loans', 'icon' => 'cash-coin', 'items' => [
                 ['All loans', 'loans.index', 'list-ul', ['loans.index', 'loans.show', 'loans.statement']],
-                ['New loan application', 'loans.create', 'plus-circle', ['loans.create'], $u->hasRole('loan_officer')],
+                ['New loan application', 'loans.create', 'plus-circle', ['loans.create'], true],
                 ['Guarantor management', 'guarantors.index', 'people', ['guarantors.*'], true, \App\Models\LoanGuarantor::whereNotNull('release_requested_at')->where('status', 'accepted')->count() ?: null],
-                ['Automatic reminders', 'reminders.index', 'alarm', ['reminders.*'], $u->hasRole('manager', 'loan_officer', 'accountant')],
-                ['Loan recovery', 'loans.recovery', 'exclamation-octagon', ['loans.recovery', 'loans.demand-letter'], $u->hasRole('manager', 'loan_officer', 'accountant')],
-                ['CRB checks', 'crb.index', 'clipboard-data', ['crb.*'], $u->hasRole('manager', 'loan_officer')],
+                ['Automatic reminders', 'reminders.index', 'alarm', ['reminders.*'], true],
+                ['Loan recovery', 'loans.recovery', 'exclamation-octagon', ['loans.recovery', 'loans.demand-letter'], true],
+                ['CRB checks', 'crb.index', 'clipboard-data', ['crb.*'], true],
                 ['Loan products', 'loan-products.index', 'box', ['loan-products.*'], $mgr],
                 ['Loan calculator', 'loans.calculator', 'calculator'],
             ]],
@@ -117,26 +116,27 @@ class Menu
                 ['Fixed assets', 'assets.index', 'pc-display', ['assets.*'], $acct],
             ]],
             ['key' => 'risk', 'label' => 'Risk & Compliance', 'icon' => 'shield-check', 'items' => [
-                ['Credit risk (AI)', 'risk.index', 'cpu', ['risk.*'], $u->hasRole('manager', 'accountant', 'loan_officer')],
-                ['Fraud monitoring', 'fraud.index', 'shield-exclamation', ['fraud.*'], $u->hasRole('manager', 'accountant'),
-                    $u->hasRole('manager', 'accountant') ? FraudAlert::whereIn('status', ['open', 'investigating'])->count() : null],
+                ['Credit risk (AI)', 'risk.index', 'cpu', ['risk.*'], true],
+                ['Fraud monitoring', 'fraud.index', 'shield-exclamation', ['fraud.*'], true,
+                    $u->hasPermission('fraud.view') ? FraudAlert::whereIn('status', ['open', 'investigating'])->count() : null],
                 ['AML alerts', 'reports.aml', 'incognito', ['reports.aml'], $mgr],
                 ['Audit trail', 'reports.audit', 'clock-history', ['reports.audit', 'reports.logins'], $mgr],
             ]],
             ['key' => 'reports', 'label' => 'Reports & Analytics', 'icon' => 'bar-chart', 'items' => [
-                ['Analytics (BI)', 'analytics', 'graph-up-arrow', ['analytics'], $u->hasRole('manager', 'accountant', 'loan_officer')],
-                ['All reports', 'reports.index', 'bar-chart', ['reports.index', 'reports.portfolio', 'reports.arrears', 'reports.balances', 'reports.cashbook', 'reports.income', 'reports.guarantors', 'reports.register', 'reports.profitability'], $u->hasRole('manager', 'accountant', 'loan_officer')],
+                ['Analytics (BI)', 'analytics', 'graph-up-arrow', ['analytics'], true],
+                ['All reports', 'reports.index', 'bar-chart', ['reports.index', 'reports.portfolio', 'reports.arrears', 'reports.balances', 'reports.cashbook', 'reports.income', 'reports.guarantors', 'reports.register', 'reports.profitability'], true],
             ]],
             ['key' => 'gov', 'label' => 'Governance', 'icon' => 'diagram-3', 'items' => [
                 ['Board & meetings', 'governance.index', 'diagram-3', ['governance.*'], $mgr],
                 ['Bulk messaging', 'messaging.index', 'megaphone', ['messaging.*'], $mgr],
             ]],
             ['key' => 'admin', 'label' => 'Administration', 'icon' => 'gear', 'items' => [
-                ['Staff users', 'admin.users.index', 'person-gear', ['admin.users.*'], $u->role === 'admin'],
-                ['Branches', 'admin.branches', 'diagram-2', ['admin.branches'], $u->role === 'admin'],
-                ['Settings', 'admin.settings', 'sliders', ['admin.settings'], $u->role === 'admin'],
-                ['Integrations', 'admin.integrations', 'plug', ['admin.integrations'], $u->role === 'admin'],
-                ['API & webhooks', 'admin.api', 'braces', ['admin.api*'], $u->role === 'admin'],
+                ['Staff users', 'admin.users.index', 'person-gear', ['admin.users.*']],
+                ['Roles & permissions', 'admin.roles.index', 'shield-lock', ['admin.roles.*']],
+                ['Branches', 'admin.branches', 'diagram-2', ['admin.branches']],
+                ['Settings', 'admin.settings', 'sliders', ['admin.settings']],
+                ['Integrations', 'admin.integrations', 'plug', ['admin.integrations']],
+                ['API & webhooks', 'admin.api', 'braces', ['admin.api*']],
             ]],
         ];
     }

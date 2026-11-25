@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        // Permissions from config/permissions.php work with @can, $user->can() and Gate::allows()
+        \Illuminate\Support\Facades\Gate::before(function ($user, string $ability) {
+            if (\App\Support\Permissions::exists($ability)) return $user->hasPermission($ability);
+            return null;
+        });
+
         // Main database connection, used to look up SACCOs in multi-SACCO mode
         config(['database.connections.landlord' => config('database.connections.' . config('database.default'))]);
 

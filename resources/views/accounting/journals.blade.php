@@ -8,7 +8,7 @@
         <div class="col-md-2"><select name="status" class="form-select"><option value="">All</option>@foreach(['draft','posted','reversed'] as $s)<option @selected(request('status') === $s)>{{ $s }}</option>@endforeach</select></div>
         <div class="col-md-2"><label class="small"><input type="checkbox" name="manual" value="1" @checked(request('manual'))> Manual only</label></div>
         <div class="col-md-4 d-flex gap-2"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
-            @if(auth()->user()->hasRole('accountant'))<a href="{{ route('accounting.journals.create') }}" class="btn btn-success ms-auto"><i class="bi bi-plus"></i> Manual journal</a>@endif</div>
+            @if(can_route('accounting.journals.create'))<a href="{{ route('accounting.journals.create') }}" class="btn btn-success ms-auto"><i class="bi bi-plus"></i> Manual journal</a>@endif</div>
     </form>
     <table class="table table-sm table-hover">
         <thead><tr><th>Date</th><th>Entry</th><th>Description</th><th>Source</th><th class="text-end">Amount</th><th>Status</th><th>By</th></tr></thead>

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Welfare Benefits & Monthly Fund')
 @section('content')
-@php($mgr = auth()->user()->hasRole('manager'))
+@php($mgr = can_route('welfare.benefits.save'))
 <div class="row g-3">
 <div class="col-lg-6">
     <div class="card"><div class="card-body">
@@ -40,7 +40,7 @@
         <h6>Monthly welfare contribution</h6>
         @if((float) setting('welfare_monthly_amount', 0) > 0)
             <p class="small mb-2">KES <strong>{{ money(setting('welfare_monthly_amount'), 0) }}</strong> per active member, charged on day {{ setting('welfare_monthly_day', 1) }} of every month from {{ setting('welfare_monthly_source', 'SAV') === 'DEP' ? 'deposits' : 'savings' }}. Members without enough balance pay by M-Pesa to <code>member no.-WLF</code>.</p>
-            @if(auth()->user()->hasRole('manager', 'accountant'))
+            @if(can_route('welfare.monthly'))
             <form method="POST" action="{{ route('welfare.monthly') }}" class="d-flex gap-1" data-confirm="Charge / retry the monthly welfare contribution for this month?">@csrf
                 <input type="month" name="period" value="{{ now()->format('Y-m') }}" class="form-control form-control-sm" style="max-width:170px">
                 <button class="btn btn-sm btn-outline-primary">Charge / retry now</button></form>

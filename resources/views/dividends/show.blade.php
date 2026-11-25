@@ -8,7 +8,7 @@
         @if(in_array($period->status, ['draft', 'computed']))
             <form method="POST" action="{{ route('dividends.compute', $period) }}">@csrf<button class="btn btn-outline-primary">{{ $period->status === 'draft' ? 'Compute' : 'Recompute' }}</button></form>
         @endif
-        @if($period->status === 'computed' && auth()->user()->hasRole('manager'))
+        @if($period->status === 'computed' && can_route('dividends.approve'))
             <form method="POST" action="{{ route('dividends.approve', $period) }}" data-confirm="Approve these payouts?">@csrf<button class="btn btn-primary">Approve</button></form>
         @endif
         @if($period->status === 'approved')

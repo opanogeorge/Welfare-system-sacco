@@ -57,7 +57,7 @@
                 <td><a href="{{ route('loans.show', $g->loan) }}">{{ $g->loan->loan_no }}</a> · {{ $g->loan->member->full_name }}</td>
                 <td class="text-money">{{ money($g->exposure()) }}</td>
                 <td class="small">{{ $g->release_request_reason }}</td>
-                <td class="text-nowrap">@if($u->hasRole('manager'))
+                <td class="text-nowrap">@if(can_route('guarantors.release-decision'))
                     <form method="POST" action="{{ route('guarantors.release-decision', $g) }}" class="d-flex gap-1">@csrf
                         <input name="note" class="form-control form-control-sm" placeholder="Note (optional)">
                         <button name="decision" value="approve" class="btn btn-sm btn-primary">Release</button>
@@ -72,7 +72,7 @@
 @if($tab === 'consents')
 <div class="card"><div class="card-body">
     <div class="d-flex mb-2"><p class="small text-muted mb-0">Requests lapse automatically after {{ setting('guarantor_request_days', 7) }} days; the borrower is told to add someone else.</p>
-        @if($u->hasRole('manager', 'loan_officer'))<form method="POST" action="{{ route('guarantors.expire') }}" class="ms-auto">@csrf<button class="btn btn-sm btn-outline-secondary">Process lapsed requests now</button></form>@endif</div>
+        @if(can_route('guarantors.expire'))<form method="POST" action="{{ route('guarantors.expire') }}" class="ms-auto">@csrf<button class="btn btn-sm btn-outline-secondary">Process lapsed requests now</button></form>@endif</div>
     <table class="table table-sm align-middle">
         <thead><tr><th>Guarantor</th><th>Borrower / loan</th><th class="text-end">Amount</th><th>Asked</th><th>Lapses</th><th></th></tr></thead>
         @forelse($pendingConsents as $g)
@@ -80,7 +80,7 @@
                 <td><a href="{{ route('loans.show', $g->loan) }}">{{ $g->loan->loan_no }}</a> · {{ $g->loan->member->full_name }}</td>
                 <td class="text-money">{{ money($g->amount) }}</td><td class="small">{{ $g->created_at->format('d/m') }}</td>
                 <td class="small {{ $g->expires_at && $g->expires_at->lt(now()->addDays(2)) ? 'text-danger' : '' }}">{{ $g->expires_at?->diffForHumans() ?? '—' }}</td>
-                <td>@if($u->hasRole('loan_officer'))
+                <td>@if(can_route('loans.guarantor.respond'))
                     <form method="POST" action="{{ route('loans.guarantor.respond', $g) }}" class="d-inline">@csrf<input type="hidden" name="accept" value="1"><button class="btn btn-sm btn-outline-success">Signed form</button></form>
                     <form method="POST" action="{{ route('loans.guarantor.respond', $g) }}" class="d-inline">@csrf<input type="hidden" name="accept" value="0"><button class="btn btn-sm btn-outline-danger">Declined</button></form>
                 @endif</td></tr>

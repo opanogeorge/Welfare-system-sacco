@@ -24,7 +24,7 @@
                         <input name="custodian" value="{{ $a->custodian }}" class="form-control form-control-sm" placeholder="Custodian">
                         <input type="date" name="next_maintenance_on" value="{{ $a->next_maintenance_on?->toDateString() }}" class="form-control form-control-sm">
                         <button class="btn btn-sm btn-outline-secondary">Transfer / update</button></form>
-                    @if(auth()->user()->hasRole('manager'))
+                    @if(can_route('assets.dispose'))
                     <form method="POST" action="{{ route('assets.dispose', $a) }}" class="col-md-6 d-flex gap-1" data-confirm="Dispose of this asset?">@csrf
                         <input type="number" step="0.01" name="proceeds" class="form-control form-control-sm" placeholder="Proceeds" required>
                         <input type="date" name="disposed_on" value="{{ today()->toDateString() }}" class="form-control form-control-sm">

@@ -40,7 +40,7 @@ class WelfareController extends Controller
         $d = $this->validated($request);
         if ($request->hasFile('document')) $d['document'] = $request->file('document')->store('welfare', 'local');
         $e = $this->welfare->create($d, $request->user());
-        if ($request->boolean('open_now') && $request->user()->hasRole('manager')) {
+        if ($request->boolean('open_now') && $request->user()->hasPermission('welfare.approve')) {
             try { $r = $this->welfare->open($e, $request->user(), $request->boolean('announce', true)); }
             catch (RuntimeException $ex) { return redirect()->route('welfare.show', $e)->with('error', $ex->getMessage()); }
             return redirect()->route('welfare.show', $e)->with('success', $this->openedMsg($r));

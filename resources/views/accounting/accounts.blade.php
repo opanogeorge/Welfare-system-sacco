@@ -42,7 +42,7 @@
             <button class="btn btn-success w-100 mt-2">Add</button>
         </form>
     </div></div>
-    @if(auth()->user()->hasRole('manager'))
+    @if(can_route('accounting.close-year'))
     <div class="card"><div class="card-body">
         <h6>Year-end close</h6>
         <p class="small text-muted">Transfers income and expenses to Retained Earnings and locks the books up to 31 Dec. Run after the audit adjustments are posted.</p>

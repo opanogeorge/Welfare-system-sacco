@@ -45,10 +45,10 @@
             @foreach($check['warnings'] as $w)<div class="small text-warning-emphasis">⚠ {{ $w }}</div>@endforeach
         @endif
     </div></div>
-    @if($u->hasRole('manager', 'loan_officer') && ! $member->guarantor_registered_at)
+    @if(can_route('guarantors.register') && ! $member->guarantor_registered_at)
         <form method="POST" action="{{ route('guarantors.register', $member) }}" class="mb-3">@csrf<button class="btn btn-outline-primary w-100"><i class="bi bi-person-check"></i> Register as guarantor</button></form>
     @endif
-    @if($u->hasRole('manager'))
+    @if(can_route('guarantors.status'))
     <div class="card"><div class="card-body">
         <h6>Guarantor settings</h6>
         <form method="POST" action="{{ route('guarantors.status', $member) }}">@csrf

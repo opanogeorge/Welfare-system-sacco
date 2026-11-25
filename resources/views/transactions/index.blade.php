@@ -27,7 +27,7 @@
                 <td class="small">{{ $t->poster?->name }}</td>
                 <td class="text-nowrap">
                     @if($t->member_account_id)<a href="{{ route('transactions.receipt', $t) }}" class="btn btn-sm btn-link p-0" title="Receipt"><i class="bi bi-receipt"></i></a>@endif
-                    @if($t->member_account_id && ! $t->reversed && $t->type !== 'reversal' && auth()->user()->hasRole('manager', 'accountant'))
+                    @if($t->member_account_id && ! $t->reversed && $t->type !== 'reversal' && can_route('transactions.reverse'))
                         <form method="POST" action="{{ route('transactions.reverse', $t) }}" class="d-inline" onsubmit="const r = prompt('Reason for reversal?'); if (!r) return false; this.reason.value = r;">
                             @csrf <input type="hidden" name="reason"><button class="btn btn-sm btn-link text-danger p-0" title="Reverse"><i class="bi bi-arrow-counterclockwise"></i></button></form>
                     @endif

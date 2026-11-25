@@ -115,7 +115,7 @@
         <h1 class="h5 mb-0">@yield('title', 'Dashboard')</h1>
         <div class="ms-auto dropdown">
             <a class="text-decoration-none text-dark dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                <i class="bi bi-person-circle me-1"></i><span class="user-name">{{ $u->name }}</span> <small class="text-muted user-role">({{ \App\Models\User::ROLES[$u->role] ?? $u->role }})</small>
+                <i class="bi bi-person-circle me-1"></i><span class="user-name">{{ $u->name }}</span> <small class="text-muted user-role">({{ $u->role_label }})</small>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="bi bi-key me-2"></i>Change password</a></li>

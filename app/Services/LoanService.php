@@ -216,7 +216,7 @@ class LoanService
         }
         $level = $loan->approvals()->count() + 1;
         $required = max(1, (int) $loan->approvals_required);
-        if ($level === 3 && $by->role !== 'admin') throw new RuntimeException('Level 3 approval is reserved for the Board Chair / Administrator.');
+        if ($level === 3 && ! $by->hasPermission('loans.approve_final')) throw new RuntimeException('Level 3 approval needs the "Final-level (board) loan approval" permission (Board Chair / Administrator).');
 
         DB::transaction(function () use ($loan, $by, $amount, $remarks, $level, $required) {
             $loan->approvals()->create(['level' => $level, 'user_id' => $by->id, 'amount' => $amount, 'remarks' => $remarks]);

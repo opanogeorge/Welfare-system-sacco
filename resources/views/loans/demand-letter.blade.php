@@ -8,7 +8,7 @@
 @endphp
 <div class="no-print mb-3 d-flex gap-2">
     <button onclick="print()" class="btn btn-success"><i class="bi bi-printer"></i> Print / Save PDF</button>
-    @if(auth()->user()->hasRole('manager', 'loan_officer'))
+    @if(can_route('loans.recovery-action'))
     <form method="POST" action="{{ route('loans.recovery-action', $loan) }}">@csrf<input type="hidden" name="action" value="demand_letter"><input type="hidden" name="notes" value="Demand letter printed; {{ $days }} days notice to {{ $deadline->format('d/m/Y') }}">
         <button class="btn btn-outline-primary">Log as issued</button></form>
     @endif

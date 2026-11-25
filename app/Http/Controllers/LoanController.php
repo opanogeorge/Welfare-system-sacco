@@ -232,6 +232,7 @@ class LoanController extends Controller
             'first_due_date' => 'required|date|after:disbursed_on',
             'external_ref' => 'nullable|string|max:60',
         ]);
+        if ($d['channel'] === 'opening' && ! $request->user()->hasPermission('checkoff.opening')) abort(403, 'Opening-balance migration needs the "Go-live opening balances" permission.');
         return $this->run(fn () => $this->loans->disburse($loan, $request->user(), $d['channel'],
             Carbon::parse($d['disbursed_on']), Carbon::parse($d['first_due_date']), $d['external_ref'] ?? null), 'Loan disbursed.');
     }

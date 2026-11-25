@@ -38,11 +38,11 @@
                 <a href="{{ route('welfare.edit', $e) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
             @endif
             @if($e->status === 'open')
-                @if($dueCount && $e->levy_source !== 'none' && $u->hasRole('manager', 'accountant'))
+                @if($dueCount && $e->levy_source !== 'none' && can_route('welfare.retry'))
                     <form method="POST" action="{{ route('welfare.retry', $e) }}">@csrf<button class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-repeat"></i> Retry deductions</button></form>
                 @endif
                 @if($dueCount)<form method="POST" action="{{ route('welfare.remind', $e) }}" data-confirm="SMS the {{ $dueCount }} member(s) who haven't paid?">@csrf<button class="btn btn-sm btn-outline-warning"><i class="bi bi-bell"></i> Remind unpaid ({{ $dueCount }})</button></form>@endif
-                @if($u->hasRole('manager'))
+                @if(can_route('welfare.announce'))
                     <form method="POST" action="{{ route('welfare.announce', $e) }}" data-confirm="Send the announcement SMS to all members again?">@csrf<button class="btn btn-sm btn-outline-secondary"><i class="bi bi-megaphone"></i> Re-announce</button></form>
                     <form method="POST" action="{{ route('welfare.close', $e) }}" data-confirm="Close this event for contributions?">@csrf<button class="btn btn-sm btn-outline-dark">Close contributions</button></form>
                 @endif
@@ -59,7 +59,7 @@
                 <tr><td>{{ $c->member->member_no }} {{ $c->member->full_name }}</td><td class="small">{{ $c->kind }}</td><td class="text-money">{{ money($c->amount) }}</td>
                     <td class="small">{{ $c->channel }}</td><td class="small">{{ $c->reference }}</td><td class="small">{{ $c->paid_at?->format('d/m/Y') }}</td>
                     <td><span class="badge text-bg-{{ ['paid' => 'success', 'due' => 'danger', 'waived' => 'secondary'][$c->status] }}">{{ $c->status }}</span></td>
-                    <td>@if($c->status === 'due' && $u->hasRole('manager'))<form method="POST" action="{{ route('welfare.waive', $c) }}" data-confirm="Waive this member's levy (e.g. hardship)?">@csrf<button class="btn btn-sm btn-link p-0">waive</button></form>@endif</td></tr>
+                    <td>@if($c->status === 'due' && can_route('welfare.waive'))<form method="POST" action="{{ route('welfare.waive', $c) }}" data-confirm="Waive this member's levy (e.g. hardship)?">@csrf<button class="btn btn-sm btn-link p-0">waive</button></form>@endif</td></tr>
             @empty<tr><td colspan="8" class="text-muted">No contributions yet.</td></tr>@endforelse
         </table>
         </div>
@@ -68,7 +68,7 @@
 </div>
 
 <div class="col-lg-4">
-    @if(in_array($e->status, ['draft', 'requested']) && $u->hasRole('manager'))
+    @if(in_array($e->status, ['draft', 'requested']) && can_route('welfare.open'))
         <div class="card mb-3 border-primary"><div class="card-body">
             <h6>{{ $e->status === 'requested' ? 'Member request: review' : 'Approve & open' }}</h6>
             <p class="small">Opening the event {{ $e->mode !== 'voluntary' && $e->levy_amount > 0 ? 'charges KES ' . money($e->levy_amount, 0) . ' to every active member and ' : '' }}lets members contribute.</p>
@@ -82,7 +82,7 @@
         <div class="card mb-3"><div class="card-body small"><h6>Announcement preview</h6><div class="bg-light p-2 rounded">{{ $announcement }}</div></div></div>
     @endif
 
-    @if($e->status === 'open' && $u->hasRole('teller', 'accountant'))
+    @if($e->status === 'open' && can_route('welfare.contribute'))
         <div class="card mb-3"><div class="card-body"><h6>Record a contribution</h6>
             <form method="POST" action="{{ route('welfare.contribute', $e) }}">@csrf
                 <select name="member_id" class="member-select" required></select>
@@ -96,7 +96,7 @@
         </div></div>
     @endif
 
-    @if(in_array($e->status, ['open', 'closed']) && $u->hasRole('manager', 'accountant'))
+    @if(in_array($e->status, ['open', 'closed']) && can_route('welfare.payout'))
         <div class="card mb-3"><div class="card-body"><h6>Pay the member</h6>
             <form method="POST" action="{{ route('welfare.payout', $e) }}" data-confirm="Pay this amount to {{ $e->member->full_name }}?">@csrf
                 <label class="form-label small">Amount</label>
