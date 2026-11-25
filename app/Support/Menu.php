@@ -22,7 +22,7 @@ class Menu
         $groups = $u->role === 'member' ? self::member($u) : self::staff($u);
 
         // drop hidden items, missing routes and empty groups; work out active + badges
-        return collect($groups)->map(function ($g) {
+        return collect($groups)->map(function ($g) use ($u) {
             $items = collect($g['items'])->filter(fn ($i) => ($i[4] ?? true) && Route::has($i[1]) && $u->canRoute($i[1]))->map(fn ($i) => [
                 'label' => $i[0], 'url' => route($i[1]), 'icon' => $i[2],
                 'active' => request()->routeIs(...($i[3] ?? [$i[1]])), 'badge' => $i[5] ?? null,
