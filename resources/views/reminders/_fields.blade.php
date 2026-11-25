@@ -1,0 +1,11 @@
+<div class="row g-2">
+    <div class="col-md-4"><label class="form-label small">Name</label><input name="name" value="{{ $r->name }}" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small">When</label><select name="event" class="form-select form-select-sm">@foreach(\App\Services\ReminderService::EVENTS as $k => [$label, $hint])<option value="{{ $k }}" @selected($r->event === $k)>{{ $label }}</option>@endforeach</select></div>
+    <div class="col-md-2"><label class="form-label small">Days</label><input type="number" name="days" min="0" max="365" value="{{ $r->days }}" class="form-control form-control-sm" required></div>
+    <div class="col-md-2"><label class="form-label small">Channel</label><select name="channel" class="form-select form-select-sm">@foreach(['sms' => 'SMS', 'email' => 'Email', 'both' => 'SMS + email'] as $k => $v)<option value="{{ $k }}" @selected($r->channel === $k)>{{ $v }}</option>@endforeach</select></div>
+    <div class="col-md-1 d-flex align-items-end"><div class="form-check"><input type="hidden" name="is_active" value="0"><input type="checkbox" name="is_active" value="1" class="form-check-input" @checked($r->is_active)><label class="form-check-label small">On</label></div></div>
+    <div class="col-12"><label class="form-label small">Message to the member</label><textarea name="message" rows="2" maxlength="480" class="form-control form-control-sm" required>{{ $r->message }}</textarea></div>
+    <div class="col-12"><div class="form-check"><input type="checkbox" name="notify_guarantors" value="1" class="form-check-input" @checked($r->notify_guarantors)><label class="form-check-label small">Also SMS the loan's guarantors (loan rules only)</label></div></div>
+    <div class="col-12"><textarea name="guarantor_message" rows="2" maxlength="480" class="form-control form-control-sm" placeholder="Message to guarantors, e.g. Dear {first_name}, {borrower} whom you guaranteed is {days} days in arrears...">{{ $r->guarantor_message }}</textarea></div>
+    <div class="col-12 small text-muted">Days means: @foreach(\App\Services\ReminderService::EVENTS as [$label, $hint]){{ $label }} = {{ $hint }}; @endforeach</div>
+</div>
